@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid';
 import {
   ContactsWrapper,
@@ -11,85 +11,64 @@ import { Contacts } from './Contacts/Contacts';
 import { Notification } from './Notification/Notification';
 import { Filter } from './Filter/Filter';
 
-export class ContactsBook extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+const contactsLS = JSON.parse(localStorage.getItem('contacts')) ?? [];
 
-  componentDidMount() {
-    const contactsLS = JSON.parse(localStorage.getItem('contacts')) || [];
-    this.setState({ contacts: contactsLS });
-  }
+export const ContactsBook = () => {
+  const [contacts, setContacts] = useState(() => contactsLS);
+  const [filter, setFilter] = useState('');
 
-  componentDidUpdate(_, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  submitForm = data => {
-    if (this.findContact(data.name)) {
+  const normalizeStr = string => string.trim().toLowerCase();
+
+  const findContact = value =>
+    contacts.find(
+      contact => normalizeStr(contact.name) === normalizeStr(value)
+    );
+
+  const submitForm = data => {
+    if (findContact(data.name)) {
       alert(`${data.name} is already to contacts`);
       return;
     }
-
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, { ...data, id: nanoid() }],
-    }));
+    setContacts(prevContacts => [...prevContacts, { ...data, id: nanoid() }]);
   };
 
-  filteredContacts = value =>
-    this.state.contacts.filter(contact => {
-      return this.normalizeStr(contact.name).includes(this.normalizeStr(value));
-    });
+  const handleChangeFilter = e => setFilter(e.target.value);
 
-  handleChange = e => {
-    const { name, value } = e.currentTarget;
-    this.setState({
-      [name]: value,
-    });
+  const getFilteredContacts = value => {
+    return contacts.filter(contact =>
+      normalizeStr(contact.name).includes(normalizeStr(value))
+    );
   };
 
-  normalizeStr = string => string.trim().toLowerCase();
-
-  findContact = value =>
-    this.state.contacts.find(
-      contact => this.normalizeStr(contact.name) === this.normalizeStr(value)
-    );
-
-  removeContact = value =>
-    this.setState(prevState => {
-      const filteredContacts = prevState.contacts.filter(
-        contact => contact.name !== value
-      );
-
-      return { contacts: filteredContacts };
+  const removeContact = value =>
+    setContacts(prevContacts => {
+      return prevContacts.filter(contact => contact.name !== value);
     });
 
-  render() {
-    const { filter, contacts } = this.state;
-    const filteredContacts = this.filteredContacts(filter);
+  const filteredContacts = getFilteredContacts(filter);
 
-    return (
-      <Container>
-        <Title>Phonebook</Title>
-        <ContactForm onSubmit={this.submitForm} />
+  return (
+    <Container>
+      <Title>Phonebook</Title>
+      <ContactForm onSubmit={submitForm} />
 
-        <TitleContacts>Contacts</TitleContacts>
-        <ContactsWrapper>
-          <Filter onChange={this.handleChange} filter={filter} />
-          <Contacts
-            filteredContacts={filteredContacts}
-            onRemove={this.removeContact}
-          />
+      <TitleContacts>Contacts</TitleContacts>
+      <ContactsWrapper>
+        <Filter onChange={handleChangeFilter} filter={filter} />
+        <Contacts
+          filteredContacts={filteredContacts}
+          onRemove={removeContact}
+        />
 
-          {contacts.length !== 0 && !filteredContacts.length && (
-            <Notification text="Contact with the entered name was not found!" />
-          )}
-          {!contacts.length && <Notification text="Contact book is empty" />}
-        </ContactsWrapper>
-      </Container>
-    );
-  }
-}
+        {contacts.length !== 0 && !filteredContacts.length && (
+          <Notification text="Contact with the entered name was not found!" />
+        )}
+        {!contacts.length && <Notification text="Contact book is empty" />}
+      </ContactsWrapper>
+    </Container>
+  );
+};

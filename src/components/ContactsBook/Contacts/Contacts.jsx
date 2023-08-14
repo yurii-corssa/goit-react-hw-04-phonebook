@@ -13,7 +13,3 @@ Contacts.propTypes = {
     .isRequired,
   onRemove: PropTypes.func.isRequired,
 };
-
-// filter.length && !filteredContacts.length
-
-// const notification = 'Contact with the entered name was not found!';
