@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { nanoid } from 'nanoid';
 import {
   ContactsWrapper,
@@ -10,16 +10,11 @@ import { ContactForm } from './ContactForm/ContactForm';
 import { Contacts } from './Contacts/Contacts';
 import { Notification } from './Notification/Notification';
 import { Filter } from './Filter/Filter';
-
-const contactsLS = JSON.parse(localStorage.getItem('contacts')) ?? [];
+import { useLocalStorage } from 'hooks/useLocalStorage';
 
 export const ContactsBook = () => {
-  const [contacts, setContacts] = useState(() => contactsLS);
+  const [contacts, setContacts] = useLocalStorage('contacts', []);
   const [filter, setFilter] = useState('');
-
-  useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
-  }, [contacts]);
 
   const normalizeStr = string => string.trim().toLowerCase();
 
